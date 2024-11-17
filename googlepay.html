@@ -53,7 +53,7 @@ function onBuyClicked() {
       data: {
         pa: '9469050879@ptsbi',
         pn: 'Shk_Gulfam',
-        tr: '1234ABCD',  // Your custom transaction reference ID
+        tr: 'txn_' + new Date().getTime(), // Unique transaction ID
         url: 'https://shgulfam.github.io/e-Educational',
         mc: '5045', //Your merchant category code
         tn: 'Purchase in Merchant',
