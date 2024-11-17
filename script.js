@@ -1,14 +1,14 @@
-// Flag to indicate form submission status
-let submitted = false;
+// Replace with your actual Google Apps Script Web App URL
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyHEhrCWqHdnPi-4anyI-7ZKe8l0LSGOGZ_z0bi0u1coZOa5nmA6b6qscVfHcSNGkTfWg/exec'; // Replace with your Web App URL
 
 /**
  * Handles the form submission.
- * Prevents the default form submission and sends data via Google Apps Script.
+ * Prevents the default form submission and sends data via Fetch API.
  */
-function handleFormSubmit(event) {
+document.getElementById('admissionForm').addEventListener('submit', function(event) {
   event.preventDefault(); // Prevent default form submission
 
-  const form = document.getElementById('admissionForm');
+  const form = event.target;
   const formData = new FormData(form);
 
   // Convert FormData to a plain object
@@ -17,22 +17,37 @@ function handleFormSubmit(event) {
     formObj[key] = value;
   });
 
-  // Send data to Google Sheets via Apps Script
-  google.script.run.withSuccessHandler((response) => {
-    if (response.success) {
+  // Send data to Google Sheets via Apps Script Web App
+  fetch(WEB_APP_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formObj)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
       M.toast({html: 'Form submitted successfully!'});
       // Hide the form and show the payment section
       form.classList.add('hidden');
       document.getElementById('paymentSection').classList.remove('hidden');
     } else {
-      M.toast({html: 'Error: ' + response.error});
+      M.toast({html: 'Error: ' + data.error});
     }
-  }).processForm(formObj);
-}
+  })
+  .catch(error => {
+    console.error('Error submitting form:', error);
+    M.toast({html: 'An error occurred while submitting the form.'});
+  });
+});
 
 /**
  * Checks whether the user can make a payment with Google Pay.
  * Caches the result in sessionStorage to avoid repeated checks.
+ *
+ * @param {PaymentRequest} request The payment request object.
+ * @return {Promise<boolean>} A promise that resolves to whether the payment can be made.
  */
 function checkCanMakePayment(request) {
   const canMakePaymentCache = 'canMakePaymentCache';
@@ -134,6 +149,8 @@ function onBuyClicked() {
 
 /**
  * Displays the Google Pay UI and handles the payment process.
+ *
+ * @param {PaymentRequest} request The payment request object.
  */
 function showPaymentUI(request) {
   // Set a timeout for the payment process (e.g., 20 minutes)
