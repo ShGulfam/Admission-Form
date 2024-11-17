@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admission Form</title>
+  <title>Admission Form with Google Pay</title>
   <!-- Include Materialize CSS for styling -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
 
@@ -15,7 +15,7 @@
 <body>
   <div class="container z-depth-2 white">
     <h4 class="center-align">Admission Form</h4>
-    <form id="admissionForm" method="post" action="https://script.google.com/macros/s/AKfycbyHEhrCWqHdnPi-4anyI-7ZKe8l0LSGOGZ_z0bi0u1coZOa5nmA6b6qscVfHcSNGkTfWg/exec" target="hidden_iframe" onsubmit="submitted=true;">
+    <form id="admissionForm" onsubmit="handleFormSubmit(event)">
       <div class="input-field">
         <input type="text" id="name" name="Name" required maxlength="50">
         <label for="name">Name</label>
@@ -33,9 +33,6 @@
       </div>
     </form>
 
-    <!-- Hidden iframe to handle form submission without redirecting -->
-    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(submitted) { formSubmissionSuccess(); }"></iframe>
-
     <!-- Payment section, initially hidden -->
     <div id="paymentSection" class="center-align hidden">
       <h5>Thank you for submitting your information.</h5>
@@ -48,6 +45,8 @@
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
   <!-- Include Materialize JS for interactions -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <!-- Include Google Pay JS library -->
+  <script src="https://pay.google.com/gp/p/js/pay.js"></script>
   <!-- Include custom script -->
   <script src="script.js"></script>
 </body>
