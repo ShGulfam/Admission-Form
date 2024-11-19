@@ -1,5 +1,5 @@
 // Replace with your actual Google Apps Script Web App URL
-const WEB_APP_URL = 'https://script.google.com/macros/s/YOUR_WEB_APP_URL/exec'; // Replace with your Web App URL
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzi7902mR6NdjxtpxTATK4Q6HF_G37X2FVn0U_Fl-I7WJVvijvjubzTEsW4ey6kEeB8yg/exec'; // Replace with your Web App URL
 
 /**
  * Handles the form submission.
