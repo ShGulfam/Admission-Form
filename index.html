@@ -130,10 +130,10 @@ function paymentResponseToJsonString(paymentResponse) {
 * @param {PaymentResponse} instrument The payment instrument that was authed.
 */
 function processResponse(instrument) {
- var instrumentString = instrumentToJsonString(instrument);
+ var instrumentString = paymentResponseToJsonString(instrument);
  console.log(instrumentString);
 
- fetch('/buy', {
+ fetch('buy.php', {
    method: 'POST',
    headers: new Headers({'Content-Type': 'application/json'}),
    body: instrumentString,
