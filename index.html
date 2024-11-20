@@ -1,27 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Google Pay Integration</title>
   <link rel="stylesheet" href="styles/main.css">
-  <meta http-equiv="Content-Security-Policy" content="
-    default-src 'self';
-    script-src 'self' https://pay.google.com https://ajax.googleapis.com;
-    style-src 'self';
-    connect-src 'self' https://your-backend-endpoint.com;">
+
+  <!-- Updated Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; 
+                 style-src 'self' 'unsafe-inline'; 
+                 script-src 'self' https://pay.google.com https://ajax.googleapis.com; 
+                 connect-src 'self' https://pay.google.com https://google.com; 
+                 frame-src https://pay.google.com;">
 </head>
 <body>
   <h1>Make a Payment</h1>
   <p>Click the button below to pay with Google Pay.</p>
-  <div id="container"></div>
-  <button class="btn btn-info" onclick="onBuyClicked()">Pay Now</button>
 
-  <!-- Include jQuery -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <div id="container">
+    <button id="payButton" class="pay-button">Pay Now</button>
+  </div>
 
-  <!-- Load Google Pay API -->
+  <!-- Include Google Pay API -->
   <script src="https://pay.google.com/gp/p/js/pay.js" async onload="onGooglePayLoaded()"></script>
 
-  <!-- Load External JavaScript -->
-  <script src="scripts/payment.js"></script>
+  <!-- Include External JavaScript -->
+  <script src="script/payment.js" defer></script>
 </body>
 </html>
