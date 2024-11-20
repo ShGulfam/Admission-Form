@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <script>
 
     // Global key for canMakepayment cache.
@@ -152,11 +152,77 @@
     }
     
     
-      
+function paymentResponseToJsonString(paymentResponse) {
+  // PaymentResponse is an interface, JSON.stringify works only on dictionaries.
+  var paymentResponseDictionary = {
+    methodName:paymentResponse.methodName,
+    details:paymentResponse.details,
+    payerName: 'Sheikh Gulfam',
+    payerPhone: '9682547458',
+    payerEmail: 'sheikhgulfam85@gmail.com',
+  };
+  return JSON.stringify(paymentResponseDictionary, undefined, 2);
+}      
+
+
+    
+
+/**
+* Process the response from browser.
+*
+* @private
+* @param {PaymentResponse} instrument The payment instrument that was authed.
+*/
+function processResponse(instrument) {
+ var instrumentString = paymentResponseToJsonString(instrument);
+ console.log(instrumentString);
+
+ $.ajax({
+    type: 'post',
+    url: 'buy.php',
+    data: {trackDetails:instrumentString},
+
+    success: function(response){
+        console.log('SUCCESS BLOCK');
+        console.log(response);
+        completePayment(instrument);
+
+    },
+
+    error: function(response) {
+        console.log('ERROR BLOCK');
+        console.log(response);
+    }
+     });
+}
+
+
+/**
+* Notify browser that the instrument authorization has completed.
+*
+* @private
+* @param {PaymentResponse} instrument The payment instrument that was authed.
+* @param {string} result Whether the auth was successful. Should be either
+* 'success' or 'fail'.
+* @param {string} msg The message to log in console.
+*/
+function completePayment(instrument, result, msg) {
+ instrument.complete(result)
+     .then(function() {
+       console.log('Payment succeeds.');
+       console.log(msg);
+     })
+     .catch(function(err) {
+       console.log(err);
+     });
+}
+
+
+
     
     </script>
     
     <div class="col-xs-12">
         <button class="btn btn-info pull-right" onclick="onBuyClicked()">Payment Now</button>
     </div>
-
+</html>
