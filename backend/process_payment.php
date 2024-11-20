@@ -1,37 +1,22 @@
-
 <?php
-header('Content-Type: application/json');
+// Retrieve the payment data from the POST request
+$paymentData = file_get_contents('php://input');
+$data = json_decode($paymentData, true);
 
+// Log the payment data (optional)
+file_put_contents('payment_log.txt', print_r($data, true), FILE_APPEND);
 
-// Ensure it's a POST request
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get the raw POST data
-    $input = file_get_contents('php://input');
-
-    // Decode the JSON payload
-    $data = json_decode($input, true);
-
-    if ($data) {
-        // Log or process payment details securely
-        error_log('Payment Data: ' . print_r($data, true));
-
-        // Send a success response
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Payment processed successfully.',
-        ]);
-    } else {
-        http_response_code(400); // Bad request
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'Invalid payment data.',
-        ]);
-    }
-} else {
-    http_response_code(405); // Method not allowed
+// Simulate payment processing (replace this with actual logic)
+if ($data['details']) {
     echo json_encode([
-        'status' => 'error',
-        'message' => 'Invalid request method.',
+        'status' => 'success',
+        'message' => 'Payment processed successfully!',
+    ]);
+} else {
+    http_response_code(400);
+    echo json_encode([
+        'status' => 'fail',
+        'message' => 'Invalid payment data!',
     ]);
 }
 ?>
