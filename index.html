@@ -103,6 +103,25 @@ function onBuyClicked() {
 }
 
 
+* Converts the payment response into a JSON string.
+ *
+ * @private
+ * @param {PaymentResponse} paymentResponse The payment response to convert.
+ * @return {string} The string representation of the payment response.
+ */
+function paymentResponseToJsonString(paymentResponse) {
+  // PaymentResponse is an interface, JSON.stringify works only on dictionaries.
+  var paymentResponseDictionary = {
+    methodName:paymentResponse.methodName,
+    details:paymentResponse.details,
+    payerName: paymentResponse.payerName,
+    payerPhone: paymentResponse.payerPhone,
+    payerEmail: paymentResponse.payerEmail,
+  };
+  return JSON.stringify(paymentResponseDictionary, undefined, 2);
+}
+  
+
 
 /**
 * Process the response from browser.
