@@ -1,90 +1,150 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Make a Payment</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 100px;
-      background-color: #f5f5f5;
+<script>
+
+// Global key for canMakepayment cache.
+const canMakePaymentCache = 'canMakePaymentCache';
+
+/**
+ * Check whether can make payment with Google Pay or not. It will check session storage
+ * cache first and use the cache directly if it exists. Otherwise, it will call
+ * canMakePayment method from PaymentRequest object and return the result, the
+ * result will also be stored in the session storage cache for future usage.
+ *
+ * @private
+ * @param {PaymentRequest} request The payment request object.
+ * @return {Promise} a promise containing the result of whether can make payment.
+ */
+function checkCanMakePayment(request) {
+  // Check canMakePayment cache, use cache result directly if it exists.
+  if (sessionStorage.hasOwnProperty(canMakePaymentCache)) {
+    return Promise.resolve(JSON.parse(sessionStorage[canMakePaymentCache]));
+  }
+
+  // If canMakePayment() isn't available, default to assume the method is
+  // supported.
+  var canMakePaymentPromise = Promise.resolve(true);
+
+  // Feature detect canMakePayment().
+  if (request.canMakePayment) {
+    canMakePaymentPromise = request.canMakePayment();
+  }
+
+  return canMakePaymentPromise
+      .then((result) => {
+        // Store the result in cache for future usage.
+        sessionStorage[canMakePaymentCache] = result;
+        return result;
+      })
+      .catch((err) => {
+        console.log('Error calling canMakePayment: ' + err);
+      });
+}
+
+/** Launches payment request flow when user taps on buy button. */
+function onBuyClicked() {
+  if (!window.PaymentRequest) {
+    console.log('Web payments are not supported in this browser.');
+    return;
+  }
+
+  // Create supported payment method.
+  const supportedInstruments = [
+    {
+      supportedMethods: ['https://tez.google.com/pay'],
+      data: {
+        pa: '9469050879@ptsbi',
+        pn: 'HSS Shangus',
+        tr: 'txn_' + new Date().getTime(),  // Your custom transaction reference ID
+        url: 'https://shgulfam.github.io/e-Educational',
+        mc: '5045', //Your merchant category code
+        tn: 'Admission Fee',
+      },
     }
-  </style>
-</head>
-<body>
-  <h1>Make a Payment</h1>
-  <p>Click the button below to pay with Google Pay.</p>
-  <div id="container"></div>
+  ];
 
-  <!-- Load Google Pay API -->
-  <script src="https://pay.google.com/gp/p/js/pay.js" async onload="onGooglePayLoaded()"></script>
+  // Create order detail data.
+  const details = {
+    total: {
+      label: 'Total',
+      amount: {
+        currency: 'INR',
+        value: '10.01', // sample amount
+      },
+    },
+    displayItems: [{
+      label: 'Original Amount',
+      amount: {
+        currency: 'INR',
+        value: '10.01',
+      },
+    }],
+  };
 
-  <script>
-    function onGooglePayLoaded() {
-      console.log("Google Pay script loaded.");
-      try {
-        const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'PRODUCTION' });
-        const button = paymentsClient.createButton({
-          onClick: onGooglePayButtonClicked,
-          buttonColor: 'default',
-          buttonType: 'long'
-        });
-        document.getElementById('container').appendChild(button);
-        console.log("Google Pay button added to container.");
-      } catch (error) {
-        console.error("Error initializing Google Pay button:", error);
-      }
-    }
+  // Create payment request object.
+  let request = null;
+  try {
+    request = new PaymentRequest(supportedInstruments, details);
+  } catch (e) {
+    console.log('Payment Request Error: ' + e.message);
+    return;
+  }
+  if (!request) {
+    console.log('Web payments are not supported in this browser.');
+    return;
+  }
 
-    function onGooglePayButtonClicked() {
-      console.log("Google Pay button clicked. Initiating payment...");
-      const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'PRODUCTION' });
-      const paymentDataRequest = getPaymentDataRequest();
+  var canMakePaymentPromise = checkCanMakePayment(request);
+  canMakePaymentPromise
+      .then((result) => {
+        showPaymentUI(request, result);
+      })
+      .catch((err) => {
+        console.log('Error calling checkCanMakePayment: ' + err);
+      });
+}
 
-      paymentsClient.loadPaymentData(paymentDataRequest)
-        .then(function(paymentData) {
-          console.log("Payment data received:", paymentData);
-          processPayment(paymentData);
-        })
-        .catch(function(err) {
-          console.error("Error loading payment data:", err);
-          alert('Unable to initiate payment. Please try again.');
-        });
-    }
 
-    function getPaymentDataRequest() {
-      return {
-        apiVersion: 2,
-        apiVersionMinor: 0,
-        allowedPaymentMethods: [{
-          supportedMethods: 'https://tez.google.com/pay',
-          data: {
-            pa: '9469050879@ptsbi',  // Your UPI ID
-            pn: 'HSS Shangus',       // Merchant Name
-            tr: 'txn_' + new Date().getTime(), // Unique transaction reference ID
-            url: 'https://shgulfam.github.io/e-Educational/',
-            mc: '5045',              // Merchant category code
-            tn: 'Admission Fee'
-          }
-        }],
-        transactionInfo: {
-          totalPriceStatus: 'FINAL',
-          totalPrice: '10.01',
-          currencyCode: 'INR'
-        },
-        merchantInfo: {
-          merchantName: 'Sheikh Gulfam'
-        }
-      };
-    }
+/**
+* Show the payment request UI.
+*
+* @private
+* @param {PaymentRequest} request The payment request object.
+* @param {Promise} canMakePayment The promise for whether can make payment.
+*/
+function showPaymentUI(request, canMakePayment) {
+ if (!canMakePayment) {
+   handleNotReadyToPay();
+   return;
+ }
 
-    function processPayment(paymentData) {
-      console.log("Processing payment data...");
-      // Simulate a successful payment for testing.
-      alert('Payment successful! Payment data: ' + JSON.stringify(paymentData));
-    }
-  </script>
-</body>
-</html>
+ // Set payment timeout.
+ let paymentTimeout = window.setTimeout(function() {
+   window.clearTimeout(paymentTimeout);
+   request.abort()
+       .then(function() {
+         console.log('Payment timed out after 20 minutes.');
+       })
+       .catch(function() {
+         console.log('Unable to abort, user is in the process of paying.');
+       });
+ }, 20 * 60 * 1000); /* 20 minutes */
+
+ request.show()
+     .then(function(instrument) {
+
+       window.clearTimeout(paymentTimeout);
+       processResponse(instrument); // Handle response from browser.
+     })
+     .catch(function(err) {
+       console.log(err);
+     });
+}
+/** Handle Google Pay not ready to pay case. */
+function handleNotReadyToPay() {
+  alert('Google Pay is not ready to pay.');
+}
+
+
+</script>
+<div class="col-xs-12">
+    <button class="btn btn-info pull-right" onclick="onBuyClicked()">Payment Now</button>
+</div>
