@@ -103,6 +103,58 @@ function onBuyClicked() {
 }
 
 
+
+/**
+* Process the response from browser.
+*
+* @private
+* @param {PaymentResponse} instrument The payment instrument that was authed.
+*/
+function processResponse(instrument) {
+ var instrumentString = instrumentToJsonString(instrument);
+ console.log(instrumentString);
+
+ fetch('/buy', {
+   method: 'POST',
+   headers: new Headers({'Content-Type': 'application/json'}),
+   body: instrumentString,
+ })
+     .then(function(buyResult) {
+       if (buyResult.ok) {
+         return buyResult.json();
+       }
+       console.log('Error sending instrument to server.');
+     })
+     .then(function(buyResultJson) {
+       completePayment(instrument, buyResultJson.status, buyResultJson.message);
+
+     })
+     .catch(function(err) {
+       console.log('Unable to process payment. ' + err);
+     });
+}
+
+/**
+* Notify browser that the instrument authorization has completed.
+*
+* @private
+* @param {PaymentResponse} instrument The payment instrument that was authed.
+* @param {string} result Whether the auth was successful. Should be either
+* 'success' or 'fail'.
+* @param {string} msg The message to log in console.
+*/
+function completePayment(instrument, result, msg) {
+ instrument.complete(result)
+     .then(function() {
+       console.log('Payment succeeds.');
+       console.log(msg);
+     })
+     .catch(function(err) {
+       console.log(err);
+     });
+}
+
+  
 /**
 * Show the payment request UI.
 *
