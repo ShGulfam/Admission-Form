@@ -1,143 +1,99 @@
-const canMakePaymentCache = 'canMakePaymentCache';
+document.addEventListener('DOMContentLoaded', () => {
+    // Add click event listener to the button
+    document.getElementById('payButton').addEventListener('click', onBuyClicked);
+});
 
-
-/**
- * Check whether the browser supports Google Pay.
- */
-function checkCanMakePayment(request) {
-  if (sessionStorage.hasOwnProperty(canMakePaymentCache)) {
-    return Promise.resolve(JSON.parse(sessionStorage[canMakePaymentCache]));
-  }
-
-  let canMakePaymentPromise = Promise.resolve(true);
-
-  if (request.canMakePayment) {
-    canMakePaymentPromise = request.canMakePayment();
-  }
-
-  return canMakePaymentPromise
-    .then((result) => {
-      sessionStorage[canMakePaymentCache] = result;
-      return result;
-    })
-    .catch((err) => {
-      console.error('Error calling canMakePayment:', err);
-      return false;
-    });
+function onGooglePayLoaded() {
+    console.log("Google Pay script loaded.");
 }
 
-/**
- * Launches the payment request flow.
- */
+// Function to handle "Pay Now" button click
 function onBuyClicked() {
-  if (!window.PaymentRequest) {
-    console.error('Web payments are not supported in this browser.');
-    return;
-  }
+    console.log("Pay button clicked.");
 
-  const supportedInstruments = [
-    {
-      supportedMethods: 'https://tez.google.com/pay',
-      data: {
-        pa: '9469050879@ptsbi', // Merchant UPI ID
-        pn: 'HSS Shangus',       // Payee name
-        tr: 'txn_' + new Date().getTime(),
-        url: 'https://yourwebsite.com/order',
-        mc: '5045',               // Merchant category code
-        tn: 'Admission Fee',      // Transaction note
-      },
-    },
-  ];
-
-  const details = {
-    total: {
-      label: 'Total',
-      amount: {
-        currency: 'INR',
-        value: '10.01', // Sample amount
-      },
-    },
-    displayItems: [
-      {
-        label: 'Original Amount',
-        amount: {
-          currency: 'INR',
-          value: '10.01',
+    // Create the payment request object
+    const supportedInstruments = [
+        {
+            supportedMethods: 'https://tez.google.com/pay',
+            data: {
+                pa: '9469050879@ptsbi', // Replace with your UPI ID
+                pn: 'HSS Shangus',      // Payee name
+                tr: '1234ABCD',         // Transaction ID
+                url: 'https://your-website.com', // URL for the order
+                mc: '5045',             // Merchant code
+                tn: 'Admission Fee',    // Transaction note
+            },
         },
-      },
-    ],
-  };
+    ];
 
-  let request = null;
+    const details = {
+        total: {
+            label: 'Total',
+            amount: {
+                currency: 'INR',
+                value: '10.01', // Sample amount
+            },
+        },
+        displayItems: [
+            {
+                label: 'Original Amount',
+                amount: {
+                    currency: 'INR',
+                    value: '10.01',
+                },
+            },
+        ],
+    };
 
-  try {
-    request = new PaymentRequest(supportedInstruments, details);
-  } catch (e) {
-    console.error('Payment Request Error:', e.message);
-    return;
-  }
+    let request;
+    try {
+        request = new PaymentRequest(supportedInstruments, details);
+    } catch (e) {
+        console.error('Payment Request Error:', e.message);
+        return;
+    }
 
-  if (!request) {
-    console.error('Web payments are not supported in this browser.');
-    return;
-  }
-
-  checkCanMakePayment(request)
-    .then((result) => {
-      if (result) {
-        showPaymentUI(request);
-      } else {
-        alert('Google Pay is not ready on this device.');
-      }
-    })
-    .catch((err) => {
-      console.error('Error calling checkCanMakePayment:', err);
-    });
+    // Check if the device can make payments
+    request.canMakePayment()
+        .then((canMakePayment) => {
+            if (!canMakePayment) {
+                alert("Google Pay is not ready on this device.");
+                return;
+            }
+            // Show the payment request UI
+            return request.show();
+        })
+        .then((paymentResponse) => {
+            // Process the payment response
+            processPayment(paymentResponse);
+        })
+        .catch((err) => {
+            console.error('Error during payment process:', err);
+        });
 }
 
-/**
- * Show the payment request UI.
- */
-function showPaymentUI(request) {
-  let paymentTimeout = window.setTimeout(() => {
-    request.abort()
-      .then(() => console.error('Payment timed out.'))
-      .catch(() => console.error('Unable to abort payment.'));
-  }, 20 * 60 * 1000); // Timeout after 20 minutes
+// Function to process payment response
+function processPayment(paymentResponse) {
+    const paymentData = {
+        methodName: paymentResponse.methodName,
+        details: paymentResponse.details,
+    };
 
-  request.show()
-    .then((instrument) => {
-      clearTimeout(paymentTimeout);
-      processPayment(instrument);
+    console.log("Payment Data:", paymentData);
+
+    // Send payment data to the server for processing
+    fetch('backend/process_payment.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentData),
     })
-    .catch((err) => {
-      console.error('Payment UI Error:', err);
-    });
-}
-
-/**
- * Process the payment response.
- */
-function processPayment(instrument) {
-  const paymentData = JSON.stringify({
-    methodName: instrument.methodName,
-    details: instrument.details,
-  });
-
-  fetch('backend/process_payment.php', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: paymentData,
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log('Server response:', data);
-      instrument.complete('success');
-    })
-    .catch((error) => {
-      console.error('Payment processing error:', error);
-      instrument.complete('fail');
-    });
+        .then((response) => response.text())
+        .then((result) => {
+            console.log("Payment processed successfully:", result);
+            paymentResponse.complete('success');
+        })
+        .catch((err) => {
+            console.error("Payment processing failed:", err);
+            paymentResponse.complete('fail');
+        });
 }
