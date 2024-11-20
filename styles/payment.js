@@ -1,5 +1,6 @@
 const canMakePaymentCache = 'canMakePaymentCache';
 
+
 /**
  * Check whether the browser supports Google Pay.
  */
