@@ -1,7 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Make a Payment</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+      background-color: #f5f5f5;
+    }
+    #container {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Make a Payment</h1>
+  <p>Click the button below to pay with Google Pay.</p>
+  <div id="container"></div>
 
-<script>
+  <!-- Load jQuery Library -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-    // Global key for canMakepayment cache.
+  <!-- Load Google Pay API -->
+  <script src="https://pay.google.com/gp/p/js/pay.js" async onload="onGooglePayLoaded()"></script>
+
+  <script>
+    // Global key for canMakePayment cache.
     const canMakePaymentCache = 'canMakePaymentCache';
     
     /**
@@ -19,16 +44,16 @@
       if (sessionStorage.hasOwnProperty(canMakePaymentCache)) {
         return Promise.resolve(JSON.parse(sessionStorage[canMakePaymentCache]));
       }
-    
+
       // If canMakePayment() isn't available, default to assume the method is
       // supported.
       var canMakePaymentPromise = Promise.resolve(true);
-    
+
       // Feature detect canMakePayment().
       if (request.canMakePayment) {
         canMakePaymentPromise = request.canMakePayment();
       }
-    
+
       return canMakePaymentPromise
           .then((result) => {
             // Store the result in cache for future usage.
@@ -37,33 +62,32 @@
           })
           .catch((err) => {
             console.log('Error calling canMakePayment: ' + err);
+            return false; // Return false if there's an error
           });
     }
-    
-    
-    
+
     /** Launches payment request flow when user taps on buy button. */
     function onBuyClicked() {
       if (!window.PaymentRequest) {
         console.log('Web payments are not supported in this browser.');
         return;
       }
-    
+
       // Create supported payment method.
       const supportedInstruments = [
         {
-          supportedMethods: ['https://tez.google.com/pay'],
+          supportedMethods: 'https://tez.google.com/pay',
           data: {
-            pa: '9469050879@ptsbi',
-            pn: 'HSS Shangus',
-            tr: '1234ABCD',  // Your custom transaction reference ID
-            url: 'https://url/of/the/order/in/your/website',
-            mc: '5045', //Your merchant category code
-            tn: 'Admission Fee',
+            pa: '9469050879@ptsbi', // Ensure this is a valid merchant UPI ID
+            pn: 'HSS Shangus',       // Payee name
+            tr: '1234ABCD',          // Your custom transaction reference ID
+            url: 'https://yourwebsite.com/order', // Replace with your actual order URL
+            mc: '5045',               // Merchant category code
+            tn: 'Admission Fee',      // Transaction note
           },
         }
       ];
-    
+
       // Create order detail data.
       const details = {
         total: {
@@ -81,7 +105,7 @@
           },
         }],
       };
-    
+
       // Create payment request object.
       let request = null;
       try {
@@ -94,7 +118,7 @@
         console.log('Web payments are not supported in this browser.');
         return;
       }
-    
+
       var canMakePaymentPromise = checkCanMakePayment(request);
       canMakePaymentPromise
           .then((result) => {
@@ -104,122 +128,108 @@
             console.log('Error calling checkCanMakePayment: ' + err);
           });
     }
-    
-    
-    
-    
+
     /**
     * Show the payment request UI.
     *
     * @private
     * @param {PaymentRequest} request The payment request object.
-    * @param {Promise} canMakePayment The promise for whether can make payment.
+    * @param {boolean} canMakePayment The result of canMakePayment check.
     */
     function showPaymentUI(request, canMakePayment) {
-     if (!canMakePayment) {
-       handleNotReadyToPay();
-       return;
-     }
-    
-     // Set payment timeout.
-     let paymentTimeout = window.setTimeout(function() {
-       window.clearTimeout(paymentTimeout);
-       request.abort()
-           .then(function() {
-             console.log('Payment timed out after 20 minutes.');
-           })
-           .catch(function() {
-             console.log('Unable to abort, user is in the process of paying.');
-           });
-     }, 20 * 60 * 1000); /* 20 minutes */
-    
-     request.show()
-         .then(function(instrument) {
-    
-           window.clearTimeout(paymentTimeout);
-           processResponse(instrument); // Handle response from browser.
-         })
-         .catch(function(err) {
-           console.log(err);
-         });
+      if (!canMakePayment) {
+        handleNotReadyToPay();
+        return;
+      }
+
+      // Set payment timeout.
+      let paymentTimeout = window.setTimeout(function() {
+        window.clearTimeout(paymentTimeout);
+        request.abort()
+            .then(function() {
+              console.log('Payment timed out after 20 minutes.');
+            })
+            .catch(function() {
+              console.log('Unable to abort, user is in the process of paying.');
+            });
+      }, 20 * 60 * 1000); /* 20 minutes */
+
+      request.show()
+          .then(function(instrument) {
+            window.clearTimeout(paymentTimeout);
+            processResponse(instrument); // Handle response from browser.
+          })
+          .catch(function(err) {
+            console.log('Payment request error: ', err);
+          });
     }
-    
-    
-    
+
     /** Handle Google Pay not ready to pay case. */
     function handleNotReadyToPay() {
-      alert('Google Pay is not ready to pay.');
+      alert('Google Pay is not ready to pay. Please ensure Google Pay is set up correctly.');
     }
-    
-    
-function paymentResponseToJsonString(paymentResponse) {
-  // PaymentResponse is an interface, JSON.stringify works only on dictionaries.
-  var paymentResponseDictionary = {
-    methodName:paymentResponse.methodName,
-    details:paymentResponse.details,
-    payerName: 'Sheikh Gulfam',
-    payerPhone: '9682547458',
-    payerEmail: 'sheikhgulfam85@gmail.com',
-  };
-  return JSON.stringify(paymentResponseDictionary, undefined, 2);
-}      
 
+    function paymentResponseToJsonString(paymentResponse) {
+      // PaymentResponse is an interface, JSON.stringify works only on dictionaries.
+      var paymentResponseDictionary = {
+        methodName: paymentResponse.methodName,
+        details: paymentResponse.details,
+        payerName: 'Sheikh Gulfam',
+        payerPhone: '9682547458',
+        payerEmail: 'sheikhgulfam85@gmail.com',
+      };
+      return JSON.stringify(paymentResponseDictionary, undefined, 2);
+    }      
 
-    
+    /**
+    * Process the response from browser.
+    *
+    * @private
+    * @param {PaymentResponse} instrument The payment instrument that was authed.
+    */
+    function processResponse(instrument) {
+      var instrumentString = paymentResponseToJsonString(instrument);
+      console.log('Instrument String:', instrumentString);
 
-/**
-* Process the response from browser.
-*
-* @private
-* @param {PaymentResponse} instrument The payment instrument that was authed.
-*/
-function processResponse(instrument) {
- var instrumentString = paymentResponseToJsonString(instrument);
- console.log(instrumentString);
-
- $.ajax({
-    type: 'post',
-    url: 'buy.php',
-    data: {trackDetails:instrumentString},
-
-    success: function(response){
-        console.log('SUCCESS BLOCK');
-        console.log(response);
-        completePayment(instrument);
-
-    },
-
-    error: function(response) {
-        console.log('ERROR BLOCK');
-        console.log(response);
+      $.ajax({
+          type: 'POST',
+          url: 'buy.php',
+          data: { trackDetails: instrumentString },
+          success: function(response){
+              console.log('SUCCESS BLOCK');
+              console.log(response);
+              completePayment(instrument, 'success', 'Payment succeeded.');
+          },
+          error: function(response) {
+              console.log('ERROR BLOCK');
+              console.log(response);
+              completePayment(instrument, 'fail', 'Payment failed.');
+          }
+       });
     }
-     });
-}
 
+    /**
+    * Notify browser that the instrument authorization has completed.
+    *
+    * @private
+    * @param {PaymentResponse} instrument The payment instrument that was authed.
+    * @param {string} result Whether the auth was successful. Should be either
+    * 'success' or 'fail'.
+    * @param {string} msg The message to log in console.
+    */
+    function completePayment(instrument, result, msg) {
+      instrument.complete(result)
+          .then(function() {
+            console.log('Payment complete: ' + msg);
+          })
+          .catch(function(err) {
+            console.log('Error completing payment: ', err);
+          });
+    }
+  </script>
 
-/**
-* Notify browser that the instrument authorization has completed.
-*
-* @private
-* @param {PaymentResponse} instrument The payment instrument that was authed.
-* @param {string} result Whether the auth was successful. Should be either
-* 'success' or 'fail'.
-* @param {string} msg The message to log in console.
-*/
-function completePayment(instrument, result, msg) {
- instrument.complete(result)
-     .then(function() {
-       console.log('Payment succeeds.');
-       console.log(msg);
-     })
-     .catch(function(err) {
-       console.log(err);
-     });
-}
- 
-    </script>
-    
-    <div class="col-xs-12">
-        <button class="btn btn-info pull-right" onclick="onBuyClicked()">Payment Now</button>
-    </div>
-
+  <div class="col-xs-12">
+    <button class="btn btn-info pull-right" onclick="onBuyClicked()">Payment Now</button>
+  </div>
+</body>
+</html>
