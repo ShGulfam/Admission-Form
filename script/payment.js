@@ -16,7 +16,7 @@ function onBuyClicked() {
                 pa: '9469050879@ptsbi',
                 pn: 'HSS Shangus',
                 tr: '1234ABCD',
-                url: 'https://your-website.com',
+                url: 'https://shgulfam.github.io/e-Educational/',
                 mc: '5045',
                 tn: 'Admission Fee',
             },
