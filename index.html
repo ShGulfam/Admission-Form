@@ -6,27 +6,22 @@
   <title>Google Pay Integration</title>
   <link rel="stylesheet" href="styles/main.css">
 
-  <!-- Updated Content Security Policy -->
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; 
                  style-src 'self' 'unsafe-inline'; 
                  script-src 'self' https://pay.google.com https://ajax.googleapis.com; 
-                 connect-src 'self' https://pay.google.com https://google.com; 
-                 frame-src https://pay.google.com;">
+                 connect-src 'self' https://pay.google.com https://google.com https://tez.google.com; 
+                 frame-src https://pay.google.com https://tez.google.com; 
+                 manifest-src https://www.google.com/pay;">
 </head>
 <body>
   <h1>Make a Payment</h1>
   <p>Click the button below to pay with Google Pay.</p>
-
   <div id="container">
     <button id="payButton" class="pay-button">Pay Now</button>
   </div>
 
-  
-  <!-- Include Google Pay API -->
   <script src="https://pay.google.com/gp/p/js/pay.js" async onload="onGooglePayLoaded()"></script>
-
-  <!-- Include External JavaScript -->
   <script src="script/payment.js" defer></script>
 </body>
 </html>
