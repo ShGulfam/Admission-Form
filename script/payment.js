@@ -6,6 +6,7 @@ function onGooglePayLoaded() {
     console.log("Google Pay script loaded.");
 }
 
+
 function onBuyClicked() {
     console.log("Pay button clicked.");
 
