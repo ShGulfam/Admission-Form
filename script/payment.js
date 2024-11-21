@@ -65,7 +65,7 @@ function processPayment(paymentResponse) {
         // apiKey: 'YOUR_SECURE_API_KEY', // Optional: If using API Key
     };
 
-    fetch('https://script.google.com/macros/s/AKfycbxxihrba0FfmWp3rEJCKdr8T8IKToN9H_b6UBxghiVuzutYu0tbcWFFNztjfJ4R1bFc/exec', { // Replace with your GAS Web App URL
+    fetch('https://script.google.com/macros/s/AKfycbwUeO7yRSVC_YBZlfeukq8ImBIAifQcQc4AUsKm9gwkaTSOSnkSQz0u-5sndhkiGj_2PQ/exec', { // Replace with your GAS Web App URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData),
