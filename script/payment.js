@@ -6,7 +6,6 @@ function onGooglePayLoaded() {
     console.log("Google Pay script loaded.");
 }
 
-
 function onBuyClicked() {
     console.log("Pay button clicked.");
 
@@ -20,6 +19,10 @@ function onBuyClicked() {
                 url: 'https://shgulfam.github.io/e-Educational/',
                 mc: '5045',
                 tn: 'Admission Fee',
+                amount: {
+                    currency: 'INR',
+                    value: '10.01',
+                },
             },
         },
     ];
@@ -39,6 +42,7 @@ function onBuyClicked() {
 
         request.canMakePayment()
             .then((canMakePayment) => {
+                console.log("canMakePayment:", canMakePayment);
                 if (!canMakePayment) {
                     alert("Google Pay is not available.");
                     return;
@@ -52,9 +56,11 @@ function onBuyClicked() {
             })
             .catch((err) => {
                 console.error("Error:", err);
+                alert("An error occurred during the payment process.");
             });
     } catch (e) {
         console.error("PaymentRequest Error:", e.message);
+        alert("An error occurred while initiating the payment.");
     }
 }
 
@@ -62,7 +68,6 @@ function processPayment(paymentResponse) {
     const paymentData = {
         methodName: paymentResponse.methodName,
         details: paymentResponse.details,
-        // apiKey: 'YOUR_SECURE_API_KEY', // Optional: If using API Key
     };
 
     fetch('https://script.google.com/macros/s/AKfycbwUeO7yRSVC_YBZlfeukq8ImBIAifQcQc4AUsKm9gwkaTSOSnkSQz0u-5sndhkiGj_2PQ/exec', { // Replace with your GAS Web App URL
